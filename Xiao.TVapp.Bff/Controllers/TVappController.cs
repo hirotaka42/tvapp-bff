@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -106,6 +107,57 @@ namespace Xiao.TVapp.Bff.Controllers
             var content = await response.Content.ReadAsStringAsync();
 
             return Ok(content);
+        }
+
+        [HttpGet("streaming/{episodeId}")]
+        public async Task<IActionResult> GetStreamingUrl(string episodeId)
+        {
+            if (string.IsNullOrWhiteSpace(episodeId))
+            {
+                return BadRequest("Episode ID is required");
+            }
+
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "yt-dlp",
+                    // Todo;
+                    // URLをダブルクォーテーションで囲むと失敗する(要改善)
+                    Arguments = $"--get-url https://tver.jp/episodes/{episodeId}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                // プロセスの開始と出力の取得
+                using (var process = new Process { StartInfo = startInfo })
+                {
+                    process.Start();
+
+                    // 非同期で標準出力/標準エラー出力から全てのデータを読み取り
+                    string result = await process.StandardOutput.ReadToEndAsync();
+                    string error = await process.StandardError.ReadToEndAsync();
+
+                    // プロセスが終了するまで待機
+                    process.WaitForExit();
+
+                    if (process.ExitCode != 0)
+                    {
+                        _logger.LogError($"yt-dlp error: {error}");
+                        return StatusCode(500, "Failed to retrieve streaming URL");
+                    }
+
+                    // 文字列の前後の空白を削除し、正確なURLを取得
+                    return Ok(result.Trim());
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while retrieving streaming URL");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

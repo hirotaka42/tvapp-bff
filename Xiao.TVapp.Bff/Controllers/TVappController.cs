@@ -80,6 +80,33 @@ namespace Xiao.TVapp.Bff.Controllers
 
             return Ok(content);
         }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string keyword, [FromQuery] string platformUid, [FromQuery] string platformToken)
+        {
+            if (string.IsNullOrWhiteSpace(keyword) || string.IsNullOrWhiteSpace(platformUid) || string.IsNullOrWhiteSpace(platformToken))
+            {
+                return BadRequest("Keyword, platformUid and platformToken are required");
+            }
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://platform-api.tver.jp/service/api/v1/callKeywordSearch?platform_uid={platformUid}&platform_token={platformToken}&keyword={keyword}");
+
+            requestMessage.Headers.Add("x-tver-platform-type", "web");
+            requestMessage.Headers.Add("Origin", "https://tver.jp");
+            requestMessage.Headers.Add("Referer", "https://tver.jp/");
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve search results");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            return Ok(content);
+        }
     }
 }
 

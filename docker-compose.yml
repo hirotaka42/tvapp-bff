@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  tvapp-bff:
+    image: tvapp-bff
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development

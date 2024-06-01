@@ -14,8 +14,14 @@ namespace Xiao.TVapp.Bff.Controllers
     public class TVappController : ControllerBase
     {
         private static readonly HttpClient client = new HttpClient();
+        private readonly ILogger<TVappController> _logger;
 
-        [HttpGet("session")]
+        public TVappController(ILogger<TVappController> logger)
+        {
+            _logger = logger;
+        }
+
+        [HttpPost("session")]
         public async Task<IActionResult> GetSessionToken()
         {
             var requestContent = new StringContent("device_type=pc", System.Text.Encoding.UTF8, "application/x-www-form-urlencoded");
@@ -42,6 +48,37 @@ namespace Xiao.TVapp.Bff.Controllers
             };
 
             return Ok(sessionToken);
+        }
+
+        [HttpGet("ranking/{genre}")]
+        public async Task<IActionResult> GetRankingDetail(string genre)
+        {
+            if (string.IsNullOrWhiteSpace(genre))
+            {
+                return BadRequest("Genre is required");
+            }
+
+            if (!Enum.TryParse(typeof(Genre), genre, true, out var genreEnum))
+            {
+                return BadRequest("Invalid genre");
+            }
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://service-api.tver.jp/api/v1/callEpisodeRankingDetail/{genre}");
+
+            requestMessage.Headers.Add("x-tver-platform-type", "web");
+            requestMessage.Headers.Add("Origin", "https://tver.jp");
+            requestMessage.Headers.Add("Referer", "https://tver.jp/");
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve ranking details");
+            }
+            var content = await response.Content.ReadAsStringAsync();
+
+            return Ok(content);
         }
     }
 }

@@ -16,6 +16,9 @@
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
+◼︎Dockerを使用しない場合は以下も必須
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+
 ## インストール
 
 プロジェクトのクローンを作成します。

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   tvapp-bff:
     image: tvapp-bff

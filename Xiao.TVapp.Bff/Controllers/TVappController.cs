@@ -82,7 +82,7 @@ namespace Xiao.TVapp.Bff.Controllers
             return Ok(content);
         }
 
-        [HttpGet("search")]
+        [HttpGet("service/search")]
         public async Task<IActionResult> Search([FromQuery] string keyword, [FromQuery] string platformUid, [FromQuery] string platformToken)
         {
             if (string.IsNullOrWhiteSpace(keyword) || string.IsNullOrWhiteSpace(platformUid) || string.IsNullOrWhiteSpace(platformToken))
@@ -109,7 +109,7 @@ namespace Xiao.TVapp.Bff.Controllers
             return Ok(content);
         }
 
-        [HttpGet("callHome")]
+        [HttpGet("service/callHome")]
         public async Task<IActionResult> CallHome([FromQuery] string platformUid, [FromQuery] string platformToken)
         {
             if ( string.IsNullOrWhiteSpace(platformUid) || string.IsNullOrWhiteSpace(platformToken))
@@ -135,6 +135,61 @@ namespace Xiao.TVapp.Bff.Controllers
 
             return Ok(content);
         }
+
+        [HttpGet("service/callEpisode/{episodeId}")]
+        public async Task<IActionResult> CallEpisode(string episodeId, [FromQuery] string platformUid, [FromQuery] string platformToken)
+        {
+            if (string.IsNullOrWhiteSpace(episodeId) || string.IsNullOrWhiteSpace(platformUid) || string.IsNullOrWhiteSpace(platformToken))
+            {
+                return BadRequest("episodeId, platformUid and platformToken are required");
+            }
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://platform-api.tver.jp/service/api/v1/callEpisode/{episodeId}?platform_uid={platformUid}&platform_token={platformToken}");
+
+            requestMessage.Headers.Add("x-tver-platform-type", "web");
+            requestMessage.Headers.Add("Origin", "https://tver.jp");
+            requestMessage.Headers.Add("Referer", "https://tver.jp/");
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve callEpisode results");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            return Ok(content);
+        }
+
+        [HttpGet("content/series/{seriesId}")]
+        public async Task<IActionResult> CallSeriesInfo(string seriesId)
+        {
+            if (string.IsNullOrWhiteSpace(seriesId))
+            {
+                return BadRequest("seriesId are required");
+            }
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://statics.tver.jp/content/series/{seriesId}.json");
+
+            requestMessage.Headers.Add("x-tver-platform-type", "web");
+            requestMessage.Headers.Add("Origin", "https://tver.jp");
+            requestMessage.Headers.Add("Referer", "https://tver.jp/");
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve content results");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            return Ok(content);
+        }
+
 
         [HttpGet("streaming/{episodeId}")]
         public async Task<IActionResult> GetStreamingUrl(string episodeId)

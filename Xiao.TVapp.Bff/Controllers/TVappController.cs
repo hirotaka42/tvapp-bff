@@ -109,6 +109,33 @@ namespace Xiao.TVapp.Bff.Controllers
             return Ok(content);
         }
 
+        [HttpGet("callHome")]
+        public async Task<IActionResult> CallHome([FromQuery] string platformUid, [FromQuery] string platformToken)
+        {
+            if ( string.IsNullOrWhiteSpace(platformUid) || string.IsNullOrWhiteSpace(platformToken))
+            {
+                return BadRequest("platformUid and platformToken are required");
+            }
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://platform-api.tver.jp/service/api/v1/callHome?platform_uid={platformUid}&platform_token={platformToken}");
+
+            requestMessage.Headers.Add("x-tver-platform-type", "web");
+            requestMessage.Headers.Add("Origin", "https://tver.jp");
+            requestMessage.Headers.Add("Referer", "https://tver.jp/");
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve call results");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            return Ok(content);
+        }
+
         [HttpGet("streaming/{episodeId}")]
         public async Task<IActionResult> GetStreamingUrl(string episodeId)
         {

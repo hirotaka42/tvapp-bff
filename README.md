@@ -1,12 +1,15 @@
 
 ## 目次
 
-- [前提条件](#前条件)
+- [目次](#目次)
+- [前提条件](#前提条件)
 - [インストール](#インストール)
-- [使い方](#使い方)
-- [APIエンドポイント](#apiエンドポイント)
-- [開発](#開発)
-- [ライセンス](#ライセンス)
+- [使い方 (Docker-Compose)](#使い方-docker-compose)
+  - [起動](#起動)
+  - [停止](#停止)
+- [使い方 (CLI)](#使い方-cli)
+  - [起動](#起動-1)
+- [APIエンドポイント一覧](#apiエンドポイント一覧)
 
 ## 前提条件
 
@@ -31,23 +34,44 @@ git clone https://github.com/hirotaka42/tvapp-bff.git
 cd tvapp-bff
 ```
 
-## 使い方
+## 使い方 (Docker-Compose)
+### 起動
 Docker Composeを使用してプロジェクトを起動します。
 ```
 docker-compose up --build
 ```
+APIエンドポイントにアクセスするには、ブラウザまたはAPIクライアント（例: Postman）を使用して以下のURLにアクセスします。
 
+DockerではHTTPSではなく、HTTPでの接続になります
+
+・http://localhost:7044/swagger/index.html  
+・http://localhost:7044/エンドポイント
+
+
+### 停止
 Docker Composeを使用してプロジェクトを停止します。
 ```
 docker-compose down
 ```
 
-APIエンドポイントにアクセスするには、ブラウザまたはAPIクライアント（例: Postman）を使用して以下のURLにアクセスします。
-```
-http://localhost:8080/エンドポイント
-```
+## 使い方 (CLI)
+ .NET 7 SDK がインストールされている事
+ https://dotnet.microsoft.com/ja-jp/download/dotnet
 
-## APIエンドポイント
+### 起動
+```
+dotnet run
+```
+APIエンドポイントにアクセスするには、ブラウザまたはAPIクライアント（例: Postman）を使用して以下のURLにアクセスします。
+
+CLIではHTTPSではなく、HTTPでの接続になります
+
+・http://localhost:ランダムなポート番号/swagger/index.html  
+・http://localhost:ランダムなポート番号/エンドポイント
+
+
+
+## APIエンドポイント一覧
 APIの主要なエンドポイントを以下に示します。
 
 |リクエスト|エンドポイント|パラメータ|クエリ|レスポンス|

@@ -163,6 +163,33 @@ namespace Xiao.TVapp.Bff.Controllers
             return Ok(content);
         }
 
+        [HttpGet("content/episode/{episodeId}")]
+        public async Task<IActionResult> CallEpisodeInfo(string episodeId)
+        {
+            if (string.IsNullOrWhiteSpace(episodeId))
+            {
+                return BadRequest("episodeId are required");
+            }
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://statics.tver.jp/content/episode/{episodeId}.json");
+
+            requestMessage.Headers.Add("x-tver-platform-type", "web");
+            requestMessage.Headers.Add("Origin", "https://tver.jp");
+            requestMessage.Headers.Add("Referer", "https://tver.jp/");
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Failed to retrieve content results");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            return Ok(content);
+        }
+
         [HttpGet("content/series/{seriesId}")]
         public async Task<IActionResult> CallSeriesInfo(string seriesId)
         {

@@ -3,7 +3,7 @@ services:
     image: tvapp-bff
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.web
     ports:
       - "5231:5231"
     environment:

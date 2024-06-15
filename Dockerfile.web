@@ -23,8 +23,17 @@ WORKDIR /app
 COPY --from=build /app/out ./
 
 # yt-dlp のスタンドアロンバイナリをダウンロードしてインストール
-RUN apt-get update && apt-get install -y wget && \
-    wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -O /usr/local/bin/yt-dlp && \
+RUN apt-get update && apt-get install -y curl && \
+    ARCHITECTURE=$(uname -m) && \
+    if [ "$ARCHITECTURE" = "x86_64" ]; then \
+        curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o /usr/local/bin/yt-dlp; \
+    elif [ "$ARCHITECTURE" = "armv7l" ]; then \
+        curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_armv7l -o /usr/local/bin/yt-dlp; \
+    elif [ "$ARCHITECTURE" = "aarch64" ]; then \
+        curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64 -o /usr/local/bin/yt-dlp; \
+    else \
+        echo "Unsupported architecture: $ARCHITECTURE" && exit 1; \
+    fi && \
     chmod a+rx /usr/local/bin/yt-dlp && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 

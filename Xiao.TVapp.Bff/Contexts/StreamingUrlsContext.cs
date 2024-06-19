@@ -16,6 +16,7 @@ namespace Xiao.TVapp.Bff.Contexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<StreamingUrls>().HasKey(s => s.Id);
+            modelBuilder.Entity<StreamingUrls>().HasIndex(s => s.EpisodeId);
         }
     }
 }

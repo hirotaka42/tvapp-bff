@@ -34,13 +34,33 @@ namespace Xiao.TVapp.Bff.Controllers
 
         // GET: api/StreamingUrls/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<StreamingUrls>> GetStreamingUrls(int id)
+        public async Task<ActionResult<StreamingUrls>> GetStreamingUrlsById(int id)
         {
           if (_context.StreamingUrls == null)
           {
               return NotFound();
           }
             var streamingUrls = await _context.StreamingUrls.FindAsync(id);
+
+            if (streamingUrls == null)
+            {
+                return NotFound();
+            }
+
+            return streamingUrls;
+        }
+
+        // GET: api/StreamingUrls/episode/{episodeId}
+        [HttpGet("episode/{episodeId}")]
+        public async Task<ActionResult<StreamingUrls>> GetStreamingUrlsByEpisodeId(string episodeId)
+        {
+            if (_context.StreamingUrls == null)
+            {
+                return NotFound();
+            }
+
+            var streamingUrls = await _context.StreamingUrls
+                .FirstOrDefaultAsync(s => s.EpisodeId == episodeId);
 
             if (streamingUrls == null)
             {

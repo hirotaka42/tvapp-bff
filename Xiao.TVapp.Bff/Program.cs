@@ -1,4 +1,7 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using Microsoft.EntityFrameworkCore;
+using Xiao.TVapp.Bff.Contexts;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // CORS ポリシーの設定
 builder.Services.AddCors(options =>
@@ -20,6 +23,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// DbContext の登録
+builder.Services.AddDbContext<StreamingUrlsContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();
 
 // CORS ポリシーの適用

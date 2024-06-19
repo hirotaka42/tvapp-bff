@@ -8,6 +8,7 @@
   - [起動](#起動)
   - [停止](#停止)
 - [使い方 (CLI)](#使い方-cli)
+  - [(初回起動時に実施)DBのマイグレーション](#初回起動時に実施dbのマイグレーション)
   - [起動](#起動-1)
 - [APIエンドポイント一覧](#apiエンドポイント一覧)
 
@@ -57,6 +58,22 @@ docker-compose down
 ## 使い方 (CLI)
  .NET 7 SDK がインストールされている事
  https://dotnet.microsoft.com/ja-jp/download/dotnet
+
+
+### (初回起動時に実施)DBのマイグレーション
+
+マイグレーションツールのインストール
+```
+dotnet tool install --global dotnet-ef --version 7.0.20
+dotnet ef --version
+```
+
+マイグレーションの実施
+```
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+```
+
 
 ### 起動
 ```

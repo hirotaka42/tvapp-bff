@@ -406,3 +406,5 @@ ASALocalRun/
 
 # DB 
 *.db*
+
+*copy*

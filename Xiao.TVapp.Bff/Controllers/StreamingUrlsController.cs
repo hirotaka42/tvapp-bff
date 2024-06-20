@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -15,10 +16,12 @@ namespace Xiao.TVapp.Bff.Controllers
     public class StreamingUrlsController : ControllerBase
     {
         private readonly StreamingUrlsContext _context;
+        private readonly ILogger<StreamingUrlsController> _logger;
 
-        public StreamingUrlsController(StreamingUrlsContext context)
+        public StreamingUrlsController(StreamingUrlsContext context, ILogger<StreamingUrlsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/StreamingUrls
@@ -50,28 +53,72 @@ namespace Xiao.TVapp.Bff.Controllers
             return streamingUrls;
         }
 
-        // GET: api/StreamingUrls/episode/{episodeId}
+        // GET: api/StreamingUrls/episode/epdkg43t
         [HttpGet("episode/{episodeId}")]
-        public async Task<ActionResult<StreamingUrls>> GetStreamingUrlsByEpisodeId(string episodeId)
+        public async Task<IActionResult> GetStreamingUrlsByEpisodeId(string episodeId)
         {
-            if (_context.StreamingUrls == null)
+            if (string.IsNullOrWhiteSpace(episodeId))
             {
-                return NotFound();
+                return BadRequest("Episode ID is required");
             }
 
-            var streamingUrls = await _context.StreamingUrls
-                .FirstOrDefaultAsync(s => s.EpisodeId == episodeId);
+            // DBからepisodeIdを検索
+            var episode = await _context.StreamingUrls
+                .FirstOrDefaultAsync(s =>s.EpisodeId == episodeId);
 
-            if (streamingUrls == null)
+            if (episode != null)
             {
-                return NotFound();
+                // episodeIdが存在すれば、そのstreamingURLを返却
+                return Ok(episode.StreamingUrl);
             }
+            else
+            {
+                try
+                {
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "yt-dlp",
+                        Arguments = $"--get-url https://tver.jp/episodes/{episodeId}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
 
-            return streamingUrls;
+                    // プロセスの開始と出力の取得
+                    using (var process = new Process { StartInfo = startInfo })
+                    {
+                        process.Start();
+
+                        // 非同期で標準出力/標準エラー出力から全てのデータを読み取り
+                        string result = await process.StandardOutput.ReadToEndAsync();
+                        string error = await process.StandardError.ReadToEndAsync();
+
+                        // プロセスが終了するまで待機
+                        process.WaitForExit();
+
+                        if (process.ExitCode != 0)
+                        {
+                            _logger.LogError($"yt-dlp error: {error}");
+                            return StatusCode(500, "Failed to retrieve streaming URL");
+                        }
+
+                        // 新しいエピソードを作成し、DBに保存
+                        var newEpisode = new StreamingUrls { EpisodeId = episodeId, StreamingUrl = result.Trim() };
+                        _context.StreamingUrls.Add(newEpisode);
+                        await _context.SaveChangesAsync();
+
+                        return Ok(newEpisode.StreamingUrl);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Exception occurred while retrieving streaming URL");
+                    return StatusCode(500, "Internal server error");
+                }
+            }
         }
-
-        // PUT: api/StreamingUrls/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStreamingUrls(int id, StreamingUrls streamingUrls)
         {

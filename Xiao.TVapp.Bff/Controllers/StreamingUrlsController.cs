@@ -68,53 +68,35 @@ namespace Xiao.TVapp.Bff.Controllers
 
             if (episode != null)
             {
-                // episodeIdが存在すれば、そのstreamingURLを返却
+                // 現在の日時とUpdatedAtの差が2日以上ならば、URLを取得し直す
+                if ((DateTime.UtcNow - episode.UpdatedAt).TotalDays >= 2)
+                {
+                    episode.StreamingUrl = await GetStreamingUrlFromYtDlp(episodeId);
+                    episode.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
                 return Ok(episode.StreamingUrl);
             }
             else
             {
                 try
                 {
-                    var startInfo = new ProcessStartInfo
+                    var newStreamingUrl = await GetStreamingUrlFromYtDlp(episodeId);
+                    DateTime dateTime = DateTime.UtcNow;
+
+                    // 新しいエピソードを作成し、DBに保存
+                    StreamingUrls newEpisode = new()
                     {
-                        FileName = "yt-dlp",
-                        Arguments = $"--get-url https://tver.jp/episodes/{episodeId}",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
+                        EpisodeId = episodeId,
+                        StreamingUrl = newStreamingUrl,
+                        CreatedAt = dateTime,
+                        UpdatedAt = dateTime,
                     };
+                    _context.StreamingUrls.Add(newEpisode);
+                    await _context.SaveChangesAsync();
 
-                    // プロセスの開始と出力の取得
-                    using (var process = new Process { StartInfo = startInfo })
-                    {
-                        process.Start();
-
-                        // 非同期で標準出力/標準エラー出力から全てのデータを読み取り
-                        string result = await process.StandardOutput.ReadToEndAsync();
-                        string error = await process.StandardError.ReadToEndAsync();
-
-                        // プロセスが終了するまで待機
-                        process.WaitForExit();
-
-                        if (process.ExitCode != 0)
-                        {
-                            _logger.LogError($"yt-dlp error: {error}");
-                            return StatusCode(500, "Failed to retrieve streaming URL");
-                        }
-
-                        // 新しいエピソードを作成し、DBに保存
-                        // タイムスタンプの更新はDbContextのSaveChangesで行われるように修正済み
-                        StreamingUrls newEpisode = new()
-                        {
-                            EpisodeId = episodeId,
-                            StreamingUrl = result.Trim()
-                        };
-                        _context.StreamingUrls.Add(newEpisode);
-                        await _context.SaveChangesAsync();
-
-                        return Ok(newEpisode.StreamingUrl);
-                    }
+                    return Ok(newEpisode.StreamingUrl);
+                    
                 }
                 catch (Exception ex)
                 {
@@ -149,7 +131,6 @@ namespace Xiao.TVapp.Bff.Controllers
                     throw;
                 }
             }
-
             return NoContent();
         }
 
@@ -191,6 +172,40 @@ namespace Xiao.TVapp.Bff.Controllers
         private bool StreamingUrlsExists(int id)
         {
             return (_context.StreamingUrls?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        private async Task<string> GetStreamingUrlFromYtDlp(string episodeId)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "yt-dlp",
+                Arguments = $"--get-url https://tver.jp/episodes/{episodeId}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            // プロセスの開始と出力の取得
+            using (var process = new Process { StartInfo = startInfo })
+            {
+                process.Start();
+
+                // 非同期で標準出力/標準エラー出力から全てのデータを読み取り
+                string result = await process.StandardOutput.ReadToEndAsync();
+                string error = await process.StandardError.ReadToEndAsync();
+
+                // プロセスが終了するまで待機
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    _logger.LogError($"yt-dlp error: {error}");
+                    throw new Exception("Failed to retrieve streaming URL");
+                }
+
+                return result.Trim();
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Xiao.TVapp.Bff.Contexts
         public StreamingUrlsContext(DbContextOptions<StreamingUrlsContext> options)
             : base(options)
         {
-            Database.EnsureCreated(); // Create the database if it doesn't exist
+            Database.Migrate();
         }
 
         public DbSet<StreamingUrls> StreamingUrls { get; set; }

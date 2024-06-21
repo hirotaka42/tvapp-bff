@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Xiao.TVapp.Bff.Contexts;
 
@@ -10,9 +11,11 @@ using Xiao.TVapp.Bff.Contexts;
 namespace Xiao.TVapp.Bff.Migrations
 {
     [DbContext(typeof(StreamingUrlsContext))]
-    partial class StreamingUrlsContextModelSnapshot : ModelSnapshot
+    [Migration("20240621051416_AddNullableCreatedAtToStreamingUrls")]
+    partial class AddNullableCreatedAtToStreamingUrls
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.20");
@@ -23,21 +26,18 @@ namespace Xiao.TVapp.Bff.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("EpisodeId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("StreamingUrl")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

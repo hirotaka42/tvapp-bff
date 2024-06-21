@@ -104,7 +104,12 @@ namespace Xiao.TVapp.Bff.Controllers
                         }
 
                         // 新しいエピソードを作成し、DBに保存
-                        var newEpisode = new StreamingUrls { EpisodeId = episodeId, StreamingUrl = result.Trim() };
+                        // タイムスタンプの更新はDbContextのSaveChangesで行われるように修正済み
+                        StreamingUrls newEpisode = new()
+                        {
+                            EpisodeId = episodeId,
+                            StreamingUrl = result.Trim()
+                        };
                         _context.StreamingUrls.Add(newEpisode);
                         await _context.SaveChangesAsync();
 

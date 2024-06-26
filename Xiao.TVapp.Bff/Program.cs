@@ -23,13 +23,25 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DbContext の登録
+//// DbContext の登録
 builder.Services.AddDbContext<StreamingUrlsContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-var app = builder.Build();
+{
+    var connectionString = builder.Configuration.GetConnectionString("MariaDbContext");
+    options.UseMySql(connectionString, 
+        new MySqlServerVersion(new Version(10, 5, 25)),
+        mySqlOptions =>
+        {
+            mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+        })
+    .EnableSensitiveDataLogging()
+    .EnableDetailedErrors();
+});
 
 // CORS ポリシーの適用
-app.UseCors();
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

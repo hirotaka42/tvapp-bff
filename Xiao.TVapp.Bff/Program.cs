@@ -42,6 +42,7 @@ builder.Services.AddDbContext<StreamingUrlsContext>(options =>
 
 // CORS ポリシーの適用
 var app = builder.Build();
+app.UseCors();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
